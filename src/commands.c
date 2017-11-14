@@ -8,7 +8,7 @@
 
 #include "commands.h"
 #include "built_in.h"
-
+#include "signal_handlers.h"
 static struct built_in_command built_in_commands[] = {
   { "cd", do_cd, validate_cd_argv },
   { "pwd", do_pwd, validate_pwd_argv },
@@ -33,6 +33,9 @@ static int is_built_in_command(const char* command_name)
  */
 int evaluate_command(int n_commands, struct single_command (*commands)[512])
 {
+
+ // int pid;
+ // int status;
   if (n_commands > 0) {
     struct single_command* com = (*commands);
 
@@ -45,6 +48,7 @@ int evaluate_command(int n_commands, struct single_command (*commands)[512])
           fprintf(stderr, "%s: Error occurs\n", com->argv[0]);
         }
       } else {
+
         fprintf(stderr, "%s: Invalid arguments\n", com->argv[0]);
         return -1;
       }
@@ -53,19 +57,20 @@ int evaluate_command(int n_commands, struct single_command (*commands)[512])
     } else if (strcmp(com->argv[0], "exit") == 0) {
       return 1;
     } else {
-      int pid;
+      pid_t pid;
       int status;
+
       pid = fork();
       if(pid<0)
 	{
 	 fprintf(stderr,"Fork Failed");
-	 return 1;
+	 return -1;
 	} 
       else if(pid == 0)
 	{
 	 execv(com ->argv[0],com->argv);
          fprintf(stderr, "%s: command not found\n", com->argv[0]);
-	 return -1;
+	 exit(1);
 	}
       else
 	{
@@ -77,7 +82,7 @@ int evaluate_command(int n_commands, struct single_command (*commands)[512])
   }
 
   return 0;
-}
+ }
 
 void free_commands(int n_commands, struct single_command (*commands)[512])
 {
